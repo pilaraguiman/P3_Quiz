@@ -126,57 +126,55 @@ exports.testCmd = (rl,id) =>{
 * Jugamos al Quiz indicado
 */
 exports.playCmd = rl => {
-	log('Jugar', 'red'); 
-	let score = 0; //puntuacion 
-	let toBePlayed = []; //meto todas las preguntas existentes
 
-	const playOne = () => { //me creo una funcion
-		
-		return new Promise((resolve, reject) => {
+  		let score = 0; //acumulov el resultado
+  		let toBePlayed = []; //array a rellenar con todas las preguntas de la BBDD. Como se consigue? Con una promesa
 
-			//longitud del array es mayor que 0?
-			if(toBePlayed.length === 0) {
-				log(`No hay nada mas que preguntar`);
-				log(`Tu resultado ha sido:`);
-				biglog(score ,'magenta');
-				resolve();
-				return;
-			}
+      for (i=0; i<models.quiz.count();i++){
+        toBeResolved[i]=i;
+      }
 
-			let pos = Math.floor(Math.random()*toBePlayed.length) //tengo un valor que va de 0 a la longitud de este chisme; pero tiene decimales, luego hay que aproximar con el Math.floor().
-			let quiz = toBePlayed[pos];
-			toBePlayed.splice(pos, 1);
+  		const playOne = () => {
+        return new Promise ((resolve, reject) => {
+  				if(toBePlayed.length === 0) {
+            log(' ¡No hay preguntas que responder!','red');
+            log(' Fin del examen. Aciertos: ');
+  					resolve();
+  					return;
+  				}
+  				let pos = Math.floor(Math.random()*toBePlayed.length);
+  				let quiz = toBePlayed[pos];
+  		    toBePlayed.splice(pos, 1); //lo borro porque ya no lo quiero más
 
-			makeQuestion(rl, quiz.question) //esto es una promesa
-			.then(answer => { //respuesta 
-				if(answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()) { //quito blancos y no distingue mayusculas y minusculas
-					score++;
-					log(`Correcto - Llevas ${score} aciertos`);
-					resolve(playOne());
-				} else {
-					log(`INCORRECTO`);
-					log(`Fin del examen, Aciertos:`);
-					biglog(score, 'magenta');
-					resolve();
-				}
-			})
-		})
-	}
-	models.quiz.findAll({raw: true}) //devuleve un string simplemente con la respuesta o lo que le digas que te saque
-	.then(quizzes => {
-		toBePlayed = quizzes;
-	})
-	.then(() => { //hasta que no acabe la anterior promesa no paso a esta ultima, por eso se mete ahi es playOne, si no no se rellenaria bien el array
-		playOne(); 
-	})
-	.catch(e => {
-		console.log("Error: " + e); // si esto se pega una galleta me gustaria que se quedara ahi pegado hasta que la promesa haya realmente terminado, por eso se pone el promt() al final, para que cuando haya acabado de verdad y vea que no hay errores entonces es cuando saco que esta todo bien con los resultados correctos
-	})
-	.then(() => {
-		console.log(score);
-		rl.prompt();
-	})
-};
+  		    makeQuestion(rl, quiz.question)
+  		    .then(answer => {
+            if(answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()){
+              score++;
+  				    log(`  CORRECTO - Lleva ${score} aciertos`);
+  				    resolve(playOne());
+            }else{
+              log('  INCORRECTO ');
+              log(`  Fin del juego. Aciertos: ${score} `);
+  				    resolve();
+  			    }
+  		    })
+  	     })
+  	  }
+  		models.quiz.findAll({raw: true}) //el raw hace que enseñe un string solamente en lugar de todo el contenido
+  		.then(quizzes => {
+  			toBePlayed= quizzes;
+      })
+  		.then(() => {
+  		 	return playOne(); //es necesario esperar a que la promesa acabe, por eso no es un return a secas
+  		 })
+  		.catch(e => {
+  			errorlog("Error:" + e); //usar errorlog con colores
+  		})
+  		.then(() => {
+  			biglog(score, 'blue');
+  			rl.prompt();
+  		})
+}
 
 exports.deleteCmd =(rl,id)=>{
 	    validateId(id)
