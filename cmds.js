@@ -130,10 +130,6 @@ exports.playCmd = rl => {
   		let score = 0; //acumulov el resultado
   		let toBePlayed = []; //array a rellenar con todas las preguntas de la BBDD. Como se consigue? Con una promesa
 
-      for (i=0; i<models.quiz.count();i++){
-        toBeResolved[i]=i;
-      }
-
   		const playOne = () => {
         return new Promise ((resolve, reject) => {
   				if(toBePlayed.length === 0) {
